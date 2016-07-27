@@ -1,11 +1,10 @@
 import io, sys, time, datetime, urllib2, json, argparse 
 import traceback
+import numpy as np
 from poloniex import Poloniex
 from Logger import Logger
 from decimal import *
 SATOSHI = Decimal(10) ** -8
-
-
 
 
 sleepTime = 1 #Start with active mode
@@ -34,48 +33,6 @@ if jsonOutputEnabled:
         print ("Logging")
 
 
-'''
-server = None
-
-def startWebServer():
-        import SimpleHTTPServer
-        import SocketServer
-        import os
-
-        try:
-                PORT = 8000
-                HOST = '127.0.0.1'
-
-                class QuietHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
-                        # quiet server logs
-                        def log_message(self, format, *args):
-                                return
-                        # serve from www folder under current working dir
-                        def translate_path(self, path):
-                                return SimpleHTTPServer.SimpleHTTPRequestHandler.translate_path(self, '/www' + path)
-                
-                global server
-                server = SocketServer.TCPServer((HOST, PORT), QuietHandler)
-                print 'Started WebServer, lendingbot status available at http://'+ HOST +':' + str(PORT) + '/lendingbot.html'
-                server.serve_forever()
-        except Exception as e:
-                print 'Failed to start WebServer' + str(e)
-
-def stopWebServer():
-        try:
-                print "Stopping WebServer"
-                server.shutdown();
-        except Exception as e:
-                print 'Failed to stop WebServer' + str(e)
-        
-webServerEnabled = ' '
-if webServerEnabled:
-        import threading
-        thread = threading.Thread(target = startWebServer)
-        thread.deamon = True
-        thread.start()
-'''
-
 print 'Welcome to Bot'
                 
 def tickerInfo():
@@ -86,14 +43,23 @@ def tickerInfo():
                 currency = currencies[1]
                 time = log.timestamp
                 if ref == 'BTC' and currency in interestedCurrencies:
-                        print (currency + ' Last: ' + tickerResponse [couple]['last'] + ' Bid: ' + tickerResponse [couple]['highestBid'] + ' Ask: ' + tickerResponse [couple]['lowestAsk'])
-        
+                        last = tickerResponse [couple]['last']
+                        bid = tickerResponse [couple]['highestBid']
+                        ask = tickerResponse [couple]['lowestAsk']
+                        high24hr = tickerResponse [couple]['high24hr']
+                        low24hr = tickerResponse [couple]['low24hr']
+                        volume24hr = tickerResponse [couple]['baseVolume']
+                        print (currency + ' Last: ' + last + ' Bid: ' + bid + ' Ask: ' + ask)
+                        tickerData = {couple, time, last, bid, ask, high24hr, low24hr}
 
+def writeToFile():
+        
 
 try:
         while True:
                 try:
                         tickerInfo()
+                        writeToFile()
                         time.sleep(sleepTime)
                 except Exception as e:
                         log.log("ERROR: " + str(e))
