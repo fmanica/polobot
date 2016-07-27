@@ -35,7 +35,7 @@ if jsonOutputEnabled:
 
 print 'Welcome to Bot'
                 
-def tickerInfo():
+def getTickerInfo():
         tickerResponse = polo.returnTicker();
         for couple in tickerResponse:
                 currencies = couple.split('_')
@@ -43,22 +43,24 @@ def tickerInfo():
                 currency = currencies[1]
                 time = log.timestamp
                 if ref == 'BTC' and currency in interestedCurrencies:
-                        last = tickerResponse [couple]['last']
-                        bid = tickerResponse [couple]['highestBid']
-                        ask = tickerResponse [couple]['lowestAsk']
-                        high24hr = tickerResponse [couple]['high24hr']
-                        low24hr = tickerResponse [couple]['low24hr']
-                        volume24hr = tickerResponse [couple]['baseVolume']
-                        print (currency + ' Last: ' + last + ' Bid: ' + bid + ' Ask: ' + ask)
-                        tickerData = {couple, time, last, bid, ask, high24hr, low24hr}
+                        tickerData = {time : {couple : tickerResponse [couple]}}
+                        with open(("data\%s.txt" % couple), "a") as myfile:
+                                myfile.write(tickerData)
+                                
+def getOrderBook():
+        orderBook = polo.returnOrderBook();
+        for i in orderBook [asks]:
+                
 
 def writeToFile():
-        
+        info = tickerInfo()
+        with open(("%s.txt" % couple), "a") as myfile:
+                myfile.write(info)
 
 try:
         while True:
                 try:
-                        tickerInfo()
+                        getTickerInfo
                         writeToFile()
                         time.sleep(sleepTime)
                 except Exception as e:
