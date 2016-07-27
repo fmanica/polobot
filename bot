@@ -1,7 +1,6 @@
 import io, sys, time, datetime, urllib2, json, argparse 
 import traceback
 from poloniex import Poloniex
-from ConfigParser import SafeConfigParser
 from Logger import Logger
 from decimal import *
 SATOSHI = Decimal(10) ** -8
@@ -95,18 +94,9 @@ try:
         while True:
                 try:
                         tickerInfo()
-                        log.refreshStatus()
-                        log.persistStatus()
                         time.sleep(sleepTime)
                 except Exception as e:
                         log.log("ERROR: " + str(e))
-                        traceback.print_exc()
-                        log.persistStatus()
+                        print("ERROR: " + str(e))
                         time.sleep(sleepTime)
                         pass
-                
-except KeyboardInterrupt:
-        if webServerEnabled:
-                stopWebServer()
-        log.log('bye')
-        exit(0)
