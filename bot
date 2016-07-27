@@ -1,0 +1,112 @@
+import io, sys, time, datetime, urllib2, json, argparse 
+import traceback
+from poloniex import Poloniex
+from ConfigParser import SafeConfigParser
+from Logger import Logger
+from decimal import *
+SATOSHI = Decimal(10) ** -8
+
+
+
+
+sleepTime = 1 #Start with active mode
+apiKey = " "
+apiSecret = " "
+interestedCurrencies = ['ETH', 'ETC']
+
+#sanity checks
+if sleepTime < 1 or sleepTime > 3600:
+        print "sleeptime values must be 1-3600"
+        exit(1)
+
+def timestamp():
+        ts = time.time()
+        return datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+
+polo = Poloniex(apiKey, apiSecret)
+log = {}
+
+# check if json output is enabled
+jsonOutputEnabled = " "
+if jsonOutputEnabled:
+        jsonFile = 'www/botlog.json'
+        jsonLogSize = 2000
+        log = Logger(jsonFile, jsonLogSize)
+        print ("Logging")
+
+
+'''
+server = None
+
+def startWebServer():
+        import SimpleHTTPServer
+        import SocketServer
+        import os
+
+        try:
+                PORT = 8000
+                HOST = '127.0.0.1'
+
+                class QuietHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+                        # quiet server logs
+                        def log_message(self, format, *args):
+                                return
+                        # serve from www folder under current working dir
+                        def translate_path(self, path):
+                                return SimpleHTTPServer.SimpleHTTPRequestHandler.translate_path(self, '/www' + path)
+                
+                global server
+                server = SocketServer.TCPServer((HOST, PORT), QuietHandler)
+                print 'Started WebServer, lendingbot status available at http://'+ HOST +':' + str(PORT) + '/lendingbot.html'
+                server.serve_forever()
+        except Exception as e:
+                print 'Failed to start WebServer' + str(e)
+
+def stopWebServer():
+        try:
+                print "Stopping WebServer"
+                server.shutdown();
+        except Exception as e:
+                print 'Failed to stop WebServer' + str(e)
+        
+webServerEnabled = ' '
+if webServerEnabled:
+        import threading
+        thread = threading.Thread(target = startWebServer)
+        thread.deamon = True
+        thread.start()
+'''
+
+print 'Welcome to Bot'
+                
+def tickerInfo():
+        tickerResponse = polo.returnTicker();
+        for couple in tickerResponse:
+                currencies = couple.split('_')
+                ref = currencies[0]
+                currency = currencies[1]
+                time = log.timestamp
+                if ref == 'BTC' and currency in interestedCurrencies:
+                        print (currency + ' Last: ' + tickerResponse [couple]['last'] + ' Bid: ' + tickerResponse [couple]['highestBid'] + ' Ask: ' + tickerResponse [couple]['lowestAsk'])
+        
+
+
+try:
+        while True:
+                try:
+                        tickerInfo()
+                        log.refreshStatus()
+                        log.persistStatus()
+                        time.sleep(sleepTime)
+                except Exception as e:
+                        log.log("ERROR: " + str(e))
+                        traceback.print_exc()
+                        log.persistStatus()
+                        time.sleep(sleepTime)
+                        pass
+                
+except KeyboardInterrupt:
+        if webServerEnabled:
+                stopWebServer()
+        log.log('bye')
+        exit(0)
