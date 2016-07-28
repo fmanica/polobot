@@ -2,23 +2,32 @@ import time, datetime
 import urllib.request
 import json
 
-sleepTime = 1 #Start with active mode
+#getdados and store dados = ticker, orderbook, orderbookdepth, volume, candlestick?
+#dados procesing = numpy and talib, calcular a lot of indicadores
+#strategy testing = fakebuy e fakesell, strategy ranking (indicators weighting maximizing return)
+#trading strategy = weighted indicators
+#trading dados = balances(complete, including orders), orders active
+#trading start
+
+sleepTime = 1
 apiKey = " "
 apiSecret = " "
-interestedCurrencies = ['NXT', 'FCT', 'ETC', 'ETH]
+interestedCurrencies = ['NXT', 'FCT', 'ETC', 'ETH']
 
-#sanity checks
+#Verify sleep time 
 if sleepTime < 1 or sleepTime > 3600:
-    print ("sleeptime values must be 1-3600")
+    print ("Sleeptime values must be 1-3600")
+    print ("Remember that polo blocks more than 6 request per second")
     exit(1)
 
+#Transforma tempo UNIX em data legível
 def timestamp():
     ts = time.time()
     return datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 
-print ('Welcome to Bot')
+print ('Starting Bot')
 
-	
+#Função para retornar ticker e salvar em arquivo
 def getTickerInfo():
     print("Getting Ticker")
     ret = urllib.request.urlopen('https://poloniex.com/public?command=returnTicker')    
@@ -27,13 +36,14 @@ def getTickerInfo():
         currencies = couple.split('_')
         ref = currencies[0]
         currency = currencies[1]
-        time = timestamp()
+        time = int(time.time())
         if ref == 'BTC' and currency in interestedCurrencies:
             tickerData = {time : {couple : tickerResponse [couple]}}
             with open(("%s.txt" % couple), "a") as myfile:
                 myfile.write(str(tickerData) + "\n")
                 print("Ticker info saved for " + couple)
-	
+
+#Função para retornar order book e salvar em arquivo
 def getOrderBook():
     print("Getting Order Book")
     for currency in interestedCurrencies:
@@ -41,7 +51,7 @@ def getOrderBook():
         urlOrderBook = 'https://poloniex.com/public?command=returnOrderBook&currencyPair=' + currencyPair + '&depth=10'
         ret = urllib.request.urlopen(urlOrderBook)    
         orderBookResponse = json.loads(ret.read().decode())
-        orderBookDepth =         
+        #orderBookDepth =         
         for i in orderBookResponse ["asks"]:
             price = float(i [0])
             amount = float(i [1])
