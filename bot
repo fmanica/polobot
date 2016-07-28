@@ -1,70 +1,79 @@
-import io, sys, time, datetime, urllib2, json, argparse 
-import traceback
-import numpy as np
-from poloniex import Poloniex
-from Logger import Logger
-from decimal import *
-SATOSHI = Decimal(10) ** -8
-
+import time, datetime
+import urllib.request
+import json
 
 sleepTime = 1 #Start with active mode
 apiKey = " "
 apiSecret = " "
-interestedCurrencies = ['ETH', 'ETC']
+interestedCurrencies = ['NXT', 'FCT', 'ETC', 'ETH]
 
 #sanity checks
 if sleepTime < 1 or sleepTime > 3600:
-        print "sleeptime values must be 1-3600"
-        exit(1)
+    print ("sleeptime values must be 1-3600")
+    exit(1)
 
 def timestamp():
-        ts = time.time()
-        return datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+    ts = time.time()
+    return datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 
-polo = Poloniex(apiKey, apiSecret)
-log = {}
+print ('Welcome to Bot')
 
-# check if json output is enabled
-jsonOutputEnabled = " "
-if jsonOutputEnabled:
-        jsonFile = 'www/botlog.json'
-        jsonLogSize = 2000
-        log = Logger(jsonFile, jsonLogSize)
-        print ("Logging")
-
-
-print 'Welcome to Bot'
-                
+	
 def getTickerInfo():
-        tickerResponse = polo.returnTicker();
-        for couple in tickerResponse:
-                currencies = couple.split('_')
-                ref = currencies[0]
-                currency = currencies[1]
-                time = log.timestamp
-                if ref == 'BTC' and currency in interestedCurrencies:
-                        tickerData = {time : {couple : tickerResponse [couple]}}
-                        with open(("data\%s.txt" % couple), "a") as myfile:
-                                myfile.write(tickerData)
-                                
+    print("Getting Ticker")
+    ret = urllib.request.urlopen('https://poloniex.com/public?command=returnTicker')    
+    tickerResponse = json.loads(ret.read().decode())
+    for couple in tickerResponse:
+        currencies = couple.split('_')
+        ref = currencies[0]
+        currency = currencies[1]
+        time = timestamp()
+        if ref == 'BTC' and currency in interestedCurrencies:
+            tickerData = {time : {couple : tickerResponse [couple]}}
+            with open(("%s.txt" % couple), "a") as myfile:
+                myfile.write(str(tickerData) + "\n")
+                print("Ticker info saved for " + couple)
+	
 def getOrderBook():
-        orderBook = polo.returnOrderBook();
-        for i in orderBook [asks]:
-                
+    print("Getting Order Book")
+    for currency in interestedCurrencies:
+        currencyPair = "BTC_" + currency
+        urlOrderBook = 'https://poloniex.com/public?command=returnOrderBook&currencyPair=' + currencyPair + '&depth=10'
+        ret = urllib.request.urlopen(urlOrderBook)    
+        orderBookResponse = json.loads(ret.read().decode())
+        orderBookDepth =         
+        for i in orderBookResponse ["asks"]:
+            price = float(i [0])
+            amount = float(i [1])
+            priceBTC = amount * price
+            print ("Price:  %.8f BTC: %.8f" % (price, priceBTC))
+        for i in orderBookResponse ["bids"]:
+            price = float(i [0])
+            amount = float(i [1])
+            priceBTC = amount * price
+            print ("Price:  %.8f BTC: %.8f" % (price, priceBTC))
+            
+            
+            
+'''
+        currencies = couple.split('_')
+        ref = currencies[0]
+        currency = currencies[1]
+        time = timestamp()
+        if ref == 'BTC' and currency in interestedCurrencies:
+            tickerData = {time : {couple : tickerResponse [couple]}}
+            with open(("%s.txt" % couple), "a") as myfile:
+                myfile.write(str(tickerData) + "\n")
+            print("Ticker info saved for " + couple)
+'''
 
-def writeToFile():
-        info = tickerInfo()
-        with open(("%s.txt" % couple), "a") as myfile:
-                myfile.write(info)
-
-try:
-        while True:
-                try:
-                        getTickerInfo
-                        writeToFile()
-                        time.sleep(sleepTime)
-                except Exception as e:
-                        log.log("ERROR: " + str(e))
-                        print("ERROR: " + str(e))
-                        time.sleep(sleepTime)
-                        pass
+while True:
+    try:
+        getTickerInfo()
+        getOrderBook()
+        print("Sleep for " + str(sleepTime) + "s")
+        time.sleep(sleepTime)
+    except Exception as e:
+        print("ERROR: " + str(e))
+        time.sleep(sleepTime)
+        pass
